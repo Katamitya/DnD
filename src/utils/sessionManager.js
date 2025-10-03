@@ -36,7 +36,8 @@ const createDefaultSession = (name) => ({
 // Сохранение сессии в localStorage
 export const saveSession = (session) => {
   try {
-    const sessions = getSessions()
+    // Получаем сессии синхронно из localStorage
+    const sessions = getSessionsSync()
     const existingIndex = sessions.findIndex(s => s.id === session.id)
     
     if (existingIndex >= 0) {
@@ -53,24 +54,20 @@ export const saveSession = (session) => {
   }
 }
 
+// Синхронная загрузка сессий из localStorage
+const getSessionsSync = () => {
+  try {
+    const sessions = localStorage.getItem('dnd-sessions')
+    return sessions ? JSON.parse(sessions) : []
+  } catch (error) {
+    console.error('Ошибка загрузки сессий:', error)
+    return []
+  }
+}
+
 // Загрузка всех сессий
 export const getSessions = async () => {
-  // Пытаемся загрузить через GitHub Gist синхронизацию
-  try {
-    const githubGistSync = (await import('./githubGistSync')).default
-    await githubGistSync.init()
-    const githubSessions = await githubGistSync.loadSessions()
-    
-    if (githubSessions && githubSessions.length > 0) {
-      // Сохраняем в старом формате для совместимости
-      localStorage.setItem('dnd-sessions', JSON.stringify(githubSessions))
-      return githubSessions
-    }
-  } catch (error) {
-    console.warn('GitHub Gist sync failed, trying cloud sync:', error)
-  }
-
-  // Инициализируем облачную синхронизацию
+  // Инициализируем облачную синхронизацию (работает между вкладками)
   try {
     const cloudSync = (await import('./cloudSync')).default
     cloudSync.init()
@@ -112,14 +109,14 @@ export const getSessions = async () => {
 
 // Загрузка конкретной сессии
 export const getSession = (sessionId) => {
-  const sessions = getSessions()
+  const sessions = getSessionsSync()
   return sessions.find(s => s.id === sessionId) || null
 }
 
 // Удаление сессии
 export const deleteSession = (sessionId) => {
   try {
-    const sessions = getSessions()
+    const sessions = getSessionsSync()
     const filteredSessions = sessions.filter(s => s.id !== sessionId)
     localStorage.setItem('dnd-sessions', JSON.stringify(filteredSessions))
     return true
@@ -134,20 +131,6 @@ export const createSession = async (name, masterId = null) => {
   // Создаем сессию локально
   const newSession = createDefaultSession(name)
   
-  // Пытаемся сохранить через GitHub Gist синхронизацию
-  try {
-    const githubGistSync = (await import('./githubGistSync')).default
-    await githubGistSync.init()
-    
-    if (await githubGistSync.addSession(newSession)) {
-      // Также сохраняем локально для совместимости
-      saveSession(newSession)
-      return newSession
-    }
-  } catch (error) {
-    console.warn('GitHub Gist sync failed, trying cloud sync:', error)
-  }
-
   // Пытаемся сохранить через облачную синхронизацию
   try {
     const cloudSync = (await import('./cloudSync')).default

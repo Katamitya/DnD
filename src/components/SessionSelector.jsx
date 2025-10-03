@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getSessions, createSession } from '../utils/sessionManager'
+import urlSync from '../utils/urlSync'
 
 const SessionSelector = ({ onSessionSelect, onClose }) => {
   const [sessions, setSessions] = useState([])
@@ -9,6 +10,8 @@ const SessionSelector = ({ onSessionSelect, onClose }) => {
 
   useEffect(() => {
     loadSessions()
+    // Инициализируем URL синхронизацию
+    urlSync.init()
   }, [])
 
   const loadSessions = async () => {
@@ -51,6 +54,14 @@ const SessionSelector = ({ onSessionSelect, onClose }) => {
 
   const handleEnterSession = (session) => {
     onSessionSelect(session)
+  }
+
+  const handleShareSession = (session) => {
+    const shareUrl = urlSync.exportSession(session)
+    if (shareUrl) {
+      // Показываем уведомление
+      alert(`Ссылка на сессию скопирована в буфер обмена!\n\nОтправьте эту ссылку другим игрокам, чтобы они могли присоединиться к сессии.`)
+    }
   }
 
   const formatDate = (dateString) => {
@@ -148,15 +159,27 @@ const SessionSelector = ({ onSessionSelect, onClose }) => {
                         <span>ID: {session.id.slice(-8)}</span>
                       </div>
                       
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEnterSession(session)
-                        }}
-                        className="btn-primary text-sm px-3 py-1"
-                      >
-                        🎮 Войти в сессию
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleShareSession(session)
+                          }}
+                          className="btn-secondary text-sm px-3 py-1"
+                          title="Поделиться сессией"
+                        >
+                          🔗 Поделиться
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEnterSession(session)
+                          }}
+                          className="btn-primary text-sm px-3 py-1"
+                        >
+                          🎮 Войти в сессию
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import syncManager from '../utils/syncManager'
 import cloudSync from '../utils/cloudSync'
-import githubGistSync from '../utils/githubGistSync'
 
 const SyncStatus = () => {
   const [isConnected, setIsConnected] = useState(false)
@@ -12,16 +11,6 @@ const SyncStatus = () => {
     const checkConnection = async () => {
       try {
         setIsConnecting(true)
-        
-        // Пытаемся инициализировать GitHub Gist синхронизацию
-        try {
-          await githubGistSync.init()
-          setSyncType('github')
-          setIsConnected(true)
-          return
-        } catch (error) {
-          console.warn('GitHub Gist sync failed, trying cloud sync:', error)
-        }
         
         // Инициализируем облачную синхронизацию
         cloudSync.init()
@@ -67,19 +56,14 @@ const SyncStatus = () => {
   }
 
   if (isConnected) {
-    const statusText = syncType === 'server' ? 'Сервер' : 
-                      syncType === 'github' ? 'GitHub' : 'Облако'
-    const statusColor = syncType === 'server' ? 'green' : 
-                       syncType === 'github' ? 'purple' : 'blue'
+    const statusText = syncType === 'server' ? 'Сервер' : 'Облако'
     
     return (
       <div className={`flex items-center space-x-2 text-sm ${
-        syncType === 'server' ? 'text-green-500' : 
-        syncType === 'github' ? 'text-purple-500' : 'text-blue-500'
+        syncType === 'server' ? 'text-green-500' : 'text-blue-500'
       }`}>
         <div className={`w-2 h-2 rounded-full ${
-          syncType === 'server' ? 'bg-green-500' : 
-          syncType === 'github' ? 'bg-purple-500' : 'bg-blue-500'
+          syncType === 'server' ? 'bg-green-500' : 'bg-blue-500'
         }`}></div>
         <span>Синхронизировано ({statusText})</span>
       </div>
