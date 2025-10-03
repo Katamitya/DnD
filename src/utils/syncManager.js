@@ -4,10 +4,21 @@ class SyncManager {
   constructor() {
     this.socket = null
     this.isConnected = false
-    // Временно используем localhost для всех режимов
-    // В будущем можно развернуть сервер на Heroku/Railway
-    this.serverUrl = 'http://localhost:3001'
+    // Определяем URL сервера в зависимости от окружения
+    this.serverUrl = this.getServerUrl()
     this.listeners = new Map()
+  }
+
+  // Определение URL сервера
+  getServerUrl() {
+    // В production (GitHub Pages) используем развернутый сервер
+    if (process.env.NODE_ENV === 'production') {
+      // Пока используем локальный сервер, позже заменим на развернутый
+      return 'http://localhost:3001'
+    }
+    
+    // В development используем локальный сервер
+    return 'http://localhost:3001'
   }
 
   // Подключение к серверу

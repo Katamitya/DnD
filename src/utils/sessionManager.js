@@ -55,7 +55,22 @@ export const saveSession = (session) => {
 
 // Загрузка всех сессий
 export const getSessions = async () => {
-  // Сначала пытаемся загрузить с сервера
+  // Инициализируем облачную синхронизацию
+  try {
+    const cloudSync = (await import('./cloudSync')).default
+    cloudSync.init()
+    const cloudSessions = cloudSync.getSessions()
+    
+    if (cloudSessions && cloudSessions.length > 0) {
+      // Сохраняем в старом формате для совместимости
+      localStorage.setItem('dnd-sessions', JSON.stringify(cloudSessions))
+      return cloudSessions
+    }
+  } catch (error) {
+    console.warn('Cloud sync failed, trying server sync:', error)
+  }
+
+  // Пытаемся загрузить с сервера синхронизации
   try {
     const syncManager = (await import('./syncManager')).default
     await syncManager.connect()
@@ -101,7 +116,24 @@ export const deleteSession = (sessionId) => {
 
 // Создание новой сессии
 export const createSession = async (name, masterId = null) => {
-  // Сначала пытаемся создать на сервере
+  // Создаем сессию локально
+  const newSession = createDefaultSession(name)
+  
+  // Пытаемся сохранить через облачную синхронизацию
+  try {
+    const cloudSync = (await import('./cloudSync')).default
+    cloudSync.init()
+    
+    if (cloudSync.addSession(newSession)) {
+      // Также сохраняем локально для совместимости
+      saveSession(newSession)
+      return newSession
+    }
+  } catch (error) {
+    console.warn('Cloud sync failed, using local storage:', error)
+  }
+
+  // Пытаемся создать на сервере
   try {
     const syncManager = (await import('./syncManager')).default
     await syncManager.connect()
@@ -117,7 +149,6 @@ export const createSession = async (name, masterId = null) => {
   }
   
   // Fallback на локальное хранение
-  const newSession = createDefaultSession(name)
   if (saveSession(newSession)) {
     return newSession
   }

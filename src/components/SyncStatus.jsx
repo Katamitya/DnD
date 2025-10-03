@@ -1,19 +1,36 @@
 import React, { useState, useEffect } from 'react'
 import syncManager from '../utils/syncManager'
+import cloudSync from '../utils/cloudSync'
 
 const SyncStatus = () => {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [syncType, setSyncType] = useState('offline')
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         setIsConnecting(true)
-        await syncManager.connect()
-        setIsConnected(syncManager.isConnected)
+        
+        // Инициализируем облачную синхронизацию
+        cloudSync.init()
+        setSyncType('cloud')
+        setIsConnected(true)
+        
+        // Пытаемся подключиться к серверу
+        try {
+          await syncManager.connect()
+          if (syncManager.isConnected) {
+            setSyncType('server')
+          }
+        } catch (error) {
+          console.warn('Server sync failed, using cloud sync:', error)
+        }
+        
       } catch (error) {
         console.warn('Sync connection failed:', error)
         setIsConnected(false)
+        setSyncType('offline')
       } finally {
         setIsConnecting(false)
       }
@@ -39,10 +56,13 @@ const SyncStatus = () => {
   }
 
   if (isConnected) {
+    const statusText = syncType === 'server' ? 'Сервер' : 'Облако'
+    const statusColor = syncType === 'server' ? 'green' : 'blue'
+    
     return (
-      <div className="flex items-center space-x-2 text-sm text-green-500">
-        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-        <span>Синхронизировано</span>
+      <div className={`flex items-center space-x-2 text-sm text-${statusColor}-500`}>
+        <div className={`w-2 h-2 bg-${statusColor}-500 rounded-full`}></div>
+        <span>Синхронизировано ({statusText})</span>
       </div>
     )
   }
