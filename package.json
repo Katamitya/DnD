@@ -1,13 +1,14 @@
 {
   "name": "dnd-game",
-  "version": "1.0.0",
+  "version": "1.00",
   "description": "DnD 5e Game Application",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "vite --host 0.0.0.0 --port 9000"
+    "start": "vite --host 0.0.0.0 --port 9000",
+    "version:update": "node update-version.js"
   },
   "dependencies": {
     "react": "^18.2.0",

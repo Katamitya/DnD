@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import LoginScreen from './components/LoginScreen'
 import GameBoard from './components/GameBoard'
 import SessionSelector from './components/SessionSelector'
+import VersionInfo from './components/VersionInfo'
 import { addCharacterToSession } from './utils/sessionManager'
 import './App.css'
 
@@ -183,6 +184,9 @@ function App() {
                 
                 <div className="text-center text-sm text-gray-400">
                   <p>Выберите сессию или создайте новую</p>
+                  <div className="mt-4">
+                    <VersionInfo showDetails={false} />
+                  </div>
                 </div>
               </div>
             </div>

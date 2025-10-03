@@ -9,6 +9,7 @@ import MapManager from './MapManager'
 import CharacterManager from './CharacterManager'
 import MonsterManager from './MonsterManager'
 import SyncStatus from './SyncStatus'
+import VersionInfo from './VersionInfo'
 import { 
   updateSession, 
   addDiceLogToSession, 
@@ -1024,7 +1025,10 @@ const GameBoard = ({ currentPlayer, players, onLogout, currentSession }) => {
           <h1 className="text-2xl font-fantasy text-dnd-gold">
               DnD 5e - {currentPlayer.isMaster ? 'Панель мастера' : 'Игровое поле'}
           </h1>
-          <SyncStatus />
+          <div className="flex items-center space-x-4">
+            <SyncStatus />
+            <VersionInfo showDetails={true} />
+          </div>
             {currentPlayer.isMaster && (
               <span className="bg-dnd-purple text-white px-3 py-1 rounded-full text-sm font-semibold">
                 🧙‍♂️ Мастер игры
