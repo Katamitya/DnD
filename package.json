@@ -1,6 +1,6 @@
 {
   "name": "dnd-game",
-  "version": "1.00",
+  "version": "1.01",
   "description": "DnD 5e Game Application",
   "main": "index.js",
   "scripts": {
@@ -25,8 +25,12 @@
     "tailwindcss": "^3.3.6",
     "vite": "^5.0.8"
   },
-  "keywords": ["dnd", "game", "react", "pixijs"],
+  "keywords": [
+    "dnd",
+    "game",
+    "react",
+    "pixijs"
+  ],
   "author": "DnD Game Developer",
   "license": "MIT"
 }
-

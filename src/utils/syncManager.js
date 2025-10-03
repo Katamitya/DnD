@@ -4,9 +4,9 @@ class SyncManager {
   constructor() {
     this.socket = null
     this.isConnected = false
-    this.serverUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://dnd-sync-server.herokuapp.com' 
-      : 'http://localhost:3001'
+    // Временно используем localhost для всех режимов
+    // В будущем можно развернуть сервер на Heroku/Railway
+    this.serverUrl = 'http://localhost:3001'
     this.listeners = new Map()
   }
 
@@ -32,8 +32,10 @@ class SyncManager {
 
       this.socket.on('connect_error', (error) => {
         console.warn('⚠️ Sync server connection failed:', error.message)
+        console.warn('🔄 Falling back to local storage mode')
         this.isConnected = false
-        reject(error)
+        // Не отклоняем промис, чтобы приложение работало в офлайн режиме
+        resolve()
       })
 
       // Обработчики событий синхронизации
