@@ -1,6 +1,6 @@
 // Система версионирования DnD приложения
 
-export const VERSION = '1.02'
+export const VERSION = '1.03'
 export const VERSION_NAME = 'Initial Sync Release'
 export const BUILD_DATE = '2025-10-03'
 

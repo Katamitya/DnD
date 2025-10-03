@@ -5,7 +5,7 @@ class CloudSync {
   constructor() {
     this.storageKey = 'dnd-cloud-sessions'
     this.lastSyncKey = 'dnd-last-sync'
-    this.syncInterval = 30000 // 30 секунд
+    this.syncInterval = 5000 // 5 секунд для сессий
     this.isEnabled = true
     this.listeners = new Map()
   }

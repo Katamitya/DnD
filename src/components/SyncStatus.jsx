@@ -57,11 +57,14 @@ const SyncStatus = () => {
 
   if (isConnected) {
     const statusText = syncType === 'server' ? 'Сервер' : 'Облако'
-    const statusColor = syncType === 'server' ? 'green' : 'blue'
     
     return (
-      <div className={`flex items-center space-x-2 text-sm text-${statusColor}-500`}>
-        <div className={`w-2 h-2 bg-${statusColor}-500 rounded-full`}></div>
+      <div className={`flex items-center space-x-2 text-sm ${
+        syncType === 'server' ? 'text-green-500' : 'text-blue-500'
+      }`}>
+        <div className={`w-2 h-2 rounded-full ${
+          syncType === 'server' ? 'bg-green-500' : 'bg-blue-500'
+        }`}></div>
         <span>Синхронизировано ({statusText})</span>
       </div>
     )

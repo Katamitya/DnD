@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
+import realtimeSync from '../utils/realtimeSync'
 
-const DiceRoller = ({ isOpen, onClose, currentPlayer, onLogRoll }) => {
+const DiceRoller = ({ isOpen, onClose, currentPlayer, onLogRoll, currentSession }) => {
   const [selectedDice, setSelectedDice] = useState([])
   const [results, setResults] = useState([])
   const [total, setTotal] = useState(0)
@@ -54,6 +55,15 @@ const DiceRoller = ({ isOpen, onClose, currentPlayer, onLogRoll }) => {
       setResults(newResults)
       setTotal(newTotal)
       setIsRolling(false)
+      
+      // Синхронизируем результат в real-time
+      if (currentSession) {
+        realtimeSync.syncDiceRoll({
+          dice: selectedDice,
+          results: newResults,
+          total: newTotal
+        }, currentPlayer.id, currentSession.id)
+      }
       
       // Логируем результат
       if (onLogRoll && currentPlayer) {

@@ -10,6 +10,7 @@ import CharacterManager from './CharacterManager'
 import MonsterManager from './MonsterManager'
 import SyncStatus from './SyncStatus'
 import VersionInfo from './VersionInfo'
+import realtimeSync from '../utils/realtimeSync'
 import { 
   updateSession, 
   addDiceLogToSession, 
@@ -42,6 +43,73 @@ const GameBoard = ({ currentPlayer, players, onLogout, currentSession }) => {
       setMaps(currentSession.maps || [])
       setCharacters(currentSession.characters || [])
       setMonsters(currentSession.monsters || [])
+    }
+  }, [currentSession])
+
+  // Инициализация real-time синхронизации
+  useEffect(() => {
+    if (!currentSession) return
+
+    // Инициализируем real-time синхронизацию
+    realtimeSync.init()
+
+    // Подписываемся на события real-time синхронизации
+    const handleTokenMove = (payload, sessionId) => {
+      if (sessionId === currentSession.id) {
+        // Обновляем позицию фишки
+        setPlayers(prevPlayers => 
+          prevPlayers.map(player => 
+            player.id === payload.tokenId 
+              ? { ...player, position: payload.position }
+              : player
+          )
+        )
+      }
+    }
+
+    const handleDiceRoll = (payload, sessionId) => {
+      if (sessionId === currentSession.id) {
+        // Добавляем результат броска в лог
+        setDiceLogs(prev => [...prev, {
+          id: Date.now(),
+          player: payload.playerId,
+          result: payload.result,
+          timestamp: payload.timestamp
+        }])
+      }
+    }
+
+    const handleCharacterAdd = (character, sessionId) => {
+      if (sessionId === currentSession.id) {
+        setCharacters(prev => [...prev, character])
+      }
+    }
+
+    const handleCharacterUpdate = (payload, sessionId) => {
+      if (sessionId === currentSession.id) {
+        setCharacters(prev => 
+          prev.map(char => 
+            char.id === payload.characterId 
+              ? { ...char, ...payload.updates }
+              : char
+          )
+        )
+      }
+    }
+
+    // Подписываемся на события
+    realtimeSync.on('tokenMove', handleTokenMove)
+    realtimeSync.on('diceRoll', handleDiceRoll)
+    realtimeSync.on('characterAdd', handleCharacterAdd)
+    realtimeSync.on('characterUpdate', handleCharacterUpdate)
+
+    // Очистка при размонтировании
+    return () => {
+      realtimeSync.off('tokenMove', handleTokenMove)
+      realtimeSync.off('diceRoll', handleDiceRoll)
+      realtimeSync.off('characterAdd', handleCharacterAdd)
+      realtimeSync.off('characterUpdate', handleCharacterUpdate)
+      realtimeSync.cleanup()
     }
   }, [currentSession])
 
@@ -1180,6 +1248,7 @@ const GameBoard = ({ currentPlayer, players, onLogout, currentSession }) => {
         onClose={() => setIsDiceRollerOpen(false)}
         currentPlayer={currentPlayer}
         onLogRoll={handleDiceRoll}
+        currentSession={currentSession}
       />
       
       {/* Модальное окно для просмотра логов */}
