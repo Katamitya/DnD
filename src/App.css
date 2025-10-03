@@ -1,0 +1,38 @@
+.App {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.game-container {
+  background: radial-gradient(circle at center, #2d3748 0%, #1a202c 100%);
+}
+
+.player-token {
+  transition: all 0.3s ease;
+}
+
+.player-token:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+.grid-cell {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.grid-cell:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.player-list-item {
+  transition: all 0.2s ease;
+}
+
+.player-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+
+
+

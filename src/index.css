@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-900 text-white font-sans;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-dnd-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-dnd-gray hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition-colors duration-200;
+  }
+  
+  .input-field {
+    @apply bg-gray-800 border border-gray-600 text-white px-3 py-2 rounded focus:outline-none focus:border-dnd-blue;
+  }
+  
+  .card {
+    @apply bg-gray-800 border border-gray-600 rounded-lg shadow-lg;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Стили для кубиков */
+  .dice-button {
+    @apply transition-all duration-200 transform hover:scale-105 active:scale-95;
+  }
+  
+  .dice-selected {
+    @apply ring-2 ring-dnd-gold ring-opacity-75;
+  }
+  
+  /* Анимация броска */
+  @keyframes diceRoll {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.1); }
+    50% { transform: rotate(180deg) scale(0.9); }
+    75% { transform: rotate(270deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  
+  .dice-rolling {
+    animation: diceRoll 0.5s ease-in-out;
+  }
+}

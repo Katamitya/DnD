@@ -1,0 +1,128 @@
+#!/usr/bin/env node
+
+/**
+ * Утилита для очистки всех сессий DnD
+ * Очищает localStorage от всех сохраненных сессий
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Создаем HTML файл для очистки localStorage
+const clearScript = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Очистка сессий DnD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1a202c, #2d3748);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 8px;
+            border: 1px solid #4a5568;
+        }
+        .success {
+            color: #48bb78;
+            font-size: 1.2em;
+            margin-bottom: 1rem;
+        }
+        .info {
+            color: #63b3ed;
+            margin-bottom: 1rem;
+        }
+        button {
+            background: #d69e2e;
+            color: #1a202c;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #b7791f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Очистка сессий DnD</h1>
+        <div id="status" class="info">Очищаем сессии...</div>
+        <button onclick="clearAndReload()">Очистить заново</button>
+    </div>
+
+    <script>
+        function clearSessions() {
+            try {
+                // Очищаем все ключи, связанные с DnD
+                const keys = Object.keys(localStorage);
+                let clearedCount = 0;
+                
+                keys.forEach(key => {
+                    if (key.includes('dnd') || key.includes('DnD')) {
+                        localStorage.removeItem(key);
+                        clearedCount++;
+                    }
+                });
+                
+                // Также очищаем основные ключи сессий
+                localStorage.removeItem('dnd-sessions');
+                localStorage.removeItem('dnd-current-session');
+                localStorage.removeItem('dnd-current-player');
+                
+                document.getElementById('status').innerHTML = 
+                    '<div class="success">✅ Сессии очищены!</div>' +
+                    '<div class="info">Очищено ключей: ' + (clearedCount + 3) + '</div>' +
+                    '<div class="info">Можно закрывать эту страницу</div>';
+                    
+                console.log('Сессии DnD очищены:', {
+                    clearedKeys: clearedCount + 3,
+                    timestamp: new Date().toISOString()
+                });
+                
+                return true;
+            } catch (error) {
+                document.getElementById('status').innerHTML = 
+                    '<div style="color: #f56565;">❌ Ошибка очистки: ' + error.message + '</div>';
+                console.error('Ошибка очистки сессий:', error);
+                return false;
+            }
+        }
+        
+        function clearAndReload() {
+            clearSessions();
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        
+        // Автоматически очищаем при загрузке страницы
+        window.onload = function() {
+            setTimeout(clearSessions, 500);
+        };
+    </script>
+</body>
+</html>
+`;
+
+// Записываем файл
+const outputPath = path.join(__dirname, 'clear-sessions.html');
+fs.writeFileSync(outputPath, clearScript);
+
+console.log('✅ Создан файл для очистки сессий: clear-sessions.html');
+console.log('📝 Откройте этот файл в браузере для очистки localStorage');
+console.log('🌐 Или используйте: http://localhost:8080/clear-sessions.html');
+
+
+

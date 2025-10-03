@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отладка синхронизации фишек DnD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .debug-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+        .warning { color: #fbbf24; }
+        pre {
+            background-color: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Отладка синхронизации фишек DnD</h1>
+        
+        <div class="debug-section">
+            <h2>Статус сервера и localStorage</h2>
+            <button onclick="checkServerStatus()">🌐 Проверить сервер (порт 8081)</button>
+            <button onclick="checkLocalStorage()">💾 Проверить localStorage</button>
+            <div id="server-status"></div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Проблемы и решения</h2>
+            <div class="info">
+                <h3>✅ Исправлено:</h3>
+                <ul>
+                    <li>Ключ localStorage изменен с 'dnd-sessions' на 'dnd_sessions'</li>
+                    <li>Мастер теперь видит фишки игроков в createTokens()</li>
+                    <li>Игроки видят фишки монстров (но не могут их перетаскивать)</li>
+                    <li>Добавлена функция syncTokenPositions() для синхронизации</li>
+                    <li>Улучшена отладочная информация во всех функциях</li>
+                </ul>
+                <h3>🔄 Что должно работать:</h3>
+                <ul>
+                    <li>Мастер видит все фишки игроков и может их перетаскивать</li>
+                    <li>Игроки видят фишки монстров и их перемещения</li>
+                    <li>Позиции синхронизируются через localStorage каждую секунду</li>
+                    <li>Все изменения сохраняются в сессии</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Создание тестовых данных</h2>
+            <button onclick="createDebugSession()">🧪 Создать отладочную сессию</button>
+            <button onclick="clearAllData()">🗑️ Очистить все данные</button>
+            <div id="debug-data"></div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Анализ данных сессии</h2>
+            <button onclick="analyzeSession()">📊 Анализировать сессию</button>
+            <div id="session-analysis"></div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Консоль отладки</h2>
+            <div id="debug-console"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            console.log(message);
+            const consoleDiv = document.getElementById('debug-console');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+            consoleDiv.innerHTML += `<div class="${className}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function checkServerStatus() {
+            log('Проверяем статус сервера на порту 8081...', 'info');
+            
+            fetch('http://localhost:8081/')
+                .then(response => {
+                    if (response.ok) {
+                        log('✅ Сервер работает на порту 8081', 'success');
+                        document.getElementById('server-status').innerHTML = `
+                            <div class="success">✅ Сервер работает на порту 8081</div>
+                            <p><a href="http://localhost:8081" target="_blank" style="color: #60a5fa;">Открыть приложение</a></p>
+                        `;
+                    } else {
+                        log('❌ Сервер отвечает с ошибкой: ' + response.status, 'error');
+                    }
+                })
+                .catch(error => {
+                    log('❌ Сервер недоступен: ' + error.message, 'error');
+                    document.getElementById('server-status').innerHTML = `
+                        <div class="error">❌ Сервер недоступен</div>
+                        <p>Убедитесь, что сервер запущен командой: <code>cd DND && npm run dev</code></p>
+                    `;
+                });
+        }
+
+        function checkLocalStorage() {
+            log('Проверяем localStorage...', 'info');
+            
+            try {
+                const sessions = JSON.parse(localStorage.getItem('dnd_sessions') || '[]');
+                log(`Найдено сессий: ${sessions.length}`, 'info');
+                
+                sessions.forEach((session, index) => {
+                    log(`Сессия ${index + 1}: ${session.name}`, 'info');
+                    log(`  Игроки: ${session.players?.length || 0}`, 'info');
+                    log(`  Персонажи: ${session.characters?.length || 0}`, 'info');
+                    log(`  Монстры: ${session.monsters?.filter(m => m.isActive).length || 0}`, 'info');
+                });
+                
+                document.getElementById('server-status').innerHTML += `
+                    <div class="info">💾 localStorage содержит ${sessions.length} сессий</div>
+                `;
+                
+            } catch (error) {
+                log('❌ Ошибка при чтении localStorage: ' + error.message, 'error');
+            }
+        }
+
+        function createDebugSession() {
+            log('Создаем отладочную сессию...', 'info');
+            
+            try {
+                const debugSession = {
+                    id: 'debug-session-' + Date.now(),
+                    name: 'Отладочная сессия синхронизации фишек',
+                    createdAt: new Date().toISOString(),
+                    players: [
+                        { id: 'debug-player-1', nickname: 'Тестовый игрок 1' },
+                        { id: 'debug-player-2', nickname: 'Тестовый игрок 2' }
+                    ],
+                    characters: [
+                        {
+                            id: 'debug-player-1',
+                            nickname: 'Тестовый игрок 1',
+                            name: 'Тестовый игрок 1',
+                            class: 'Воин',
+                            level: 3,
+                            race: 'Человек',
+                            description: 'Отладочный персонаж 1',
+                            color: '#3b82f6',
+                            avatar: { original: '', thumbnail: '', circularThumbnail: '' },
+                            gridX: 5,
+                            gridY: 5
+                        },
+                        {
+                            id: 'debug-player-2',
+                            nickname: 'Тестовый игрок 2',
+                            name: 'Тестовый игрок 2',
+                            class: 'Маг',
+                            level: 2,
+                            race: 'Эльф',
+                            description: 'Отладочный персонаж 2',
+                            color: '#10b981',
+                            avatar: { original: '', thumbnail: '', circularThumbnail: '' },
+                            gridX: 8,
+                            gridY: 8
+                        }
+                    ],
+                    maps: [
+                        {
+                            id: Date.now(),
+                            name: 'Отладочная карта',
+                            description: 'Карта для отладки синхронизации',
+                            type: 'grid',
+                            isActive: true,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            gridSize: 15,
+                            cellSize: 40,
+                            gridData: {
+                                '3,3': 'grass',
+                                '4,4': 'stone'
+                            }
+                        }
+                    ],
+                    monsters: [
+                        {
+                            id: 'debug-monster-1',
+                            name: 'Отладочный гоблин',
+                            type: 'Гоблин',
+                            hp: 7,
+                            ac: 15,
+                            color: '#dc2626',
+                            avatar: { original: '', thumbnail: '', circularThumbnail: '' },
+                            isActive: true,
+                            gridX: 10,
+                            gridY: 10
+                        }
+                    ],
+                    diceLogs: []
+                };
+
+                const sessions = JSON.parse(localStorage.getItem('dnd_sessions') || '[]');
+                sessions.push(debugSession);
+                localStorage.setItem('dnd_sessions', JSON.stringify(sessions));
+
+                log('✅ Отладочная сессия создана успешно!', 'success');
+                document.getElementById('debug-data').innerHTML = `
+                    <div class="success">✅ Отладочная сессия создана</div>
+                    <p>ID сессии: ${debugSession.id}</p>
+                    <p>Теперь можно тестировать синхронизацию в приложении</p>
+                `;
+                
+            } catch (error) {
+                log('❌ Ошибка при создании сессии: ' + error.message, 'error');
+            }
+        }
+
+        function clearAllData() {
+            log('Очищаем все данные localStorage...', 'warning');
+            
+            localStorage.removeItem('dnd_sessions');
+            localStorage.removeItem('dnd_textures');
+            
+            log('✅ Все данные очищены', 'success');
+            document.getElementById('debug-data').innerHTML = `
+                <div class="warning">🗑️ Все данные localStorage очищены</div>
+            `;
+        }
+
+        function analyzeSession() {
+            log('Анализируем данные сессии...', 'info');
+            
+            try {
+                const sessions = JSON.parse(localStorage.getItem('dnd_sessions') || '[]');
+                
+                if (sessions.length === 0) {
+                    document.getElementById('session-analysis').innerHTML = `
+                        <div class="warning">❌ Нет сессий для анализа</div>
+                    `;
+                    return;
+                }
+                
+                const session = sessions[sessions.length - 1]; // Последняя сессия
+                
+                const analysis = {
+                    sessionId: session.id,
+                    sessionName: session.name,
+                    playersCount: session.players?.length || 0,
+                    charactersCount: session.characters?.length || 0,
+                    activeMonsters: session.monsters?.filter(m => m.isActive).length || 0,
+                    mapsCount: session.maps?.length || 0,
+                    activeMaps: session.maps?.filter(m => m.isActive).length || 0,
+                    charactersWithPositions: session.characters?.filter(c => c.gridX !== undefined && c.gridY !== undefined).length || 0,
+                    monstersWithPositions: session.monsters?.filter(m => m.gridX !== undefined && m.gridY !== undefined).length || 0
+                };
+                
+                log('Анализ завершен:', 'success');
+                log(JSON.stringify(analysis, null, 2), 'info');
+                
+                document.getElementById('session-analysis').innerHTML = `
+                    <div class="info">📊 Анализ последней сессии:</div>
+                    <pre>${JSON.stringify(analysis, null, 2)}</pre>
+                    <div class="info">🔍 Детали персонажей:</div>
+                    <pre>${JSON.stringify(session.characters || [], null, 2)}</pre>
+                    <div class="info">👹 Детали монстров:</div>
+                    <pre>${JSON.stringify(session.monsters || [], null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                log('❌ Ошибка при анализе: ' + error.message, 'error');
+            }
+        }
+
+        // Автоматическая проверка при загрузке
+        window.onload = function() {
+            log('Страница отладки загружена', 'info');
+            checkServerStatus();
+            checkLocalStorage();
+        };
+
+        // Перехват ошибок
+        window.onerror = function(message, source, lineno, colno, error) {
+            log(`JavaScript Error: ${message} at ${source}:${lineno}:${colno}`, 'error');
+        };
+    </script>
+</body>
+</html>
+
+

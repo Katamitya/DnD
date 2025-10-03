@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Продакшен сервер
+  dnd-game-prod:
+    build: .
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: dnd-game-prod
+    networks:
+      - dnd-network
+
+  # Сервер разработки
+  dnd-game-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./package.json:/app/package.json
+      - ./vite.config.js:/app/vite.config.js
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./postcss.config.js:/app/postcss.config.js
+    restart: unless-stopped
+    container_name: dnd-game-dev
+    networks:
+      - dnd-network
+
+networks:
+  dnd-network:
+    driver: bridge
+
