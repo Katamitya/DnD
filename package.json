@@ -1,6 +1,6 @@
 {
   "name": "dnd-game",
-  "version": "1.03",
+  "version": "1.04",
   "description": "DnD 5e Game Application",
   "main": "index.js",
   "scripts": {

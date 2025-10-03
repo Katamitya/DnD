@@ -55,6 +55,21 @@ export const saveSession = (session) => {
 
 // Загрузка всех сессий
 export const getSessions = async () => {
+  // Пытаемся загрузить через GitHub Gist синхронизацию
+  try {
+    const githubGistSync = (await import('./githubGistSync')).default
+    await githubGistSync.init()
+    const githubSessions = await githubGistSync.loadSessions()
+    
+    if (githubSessions && githubSessions.length > 0) {
+      // Сохраняем в старом формате для совместимости
+      localStorage.setItem('dnd-sessions', JSON.stringify(githubSessions))
+      return githubSessions
+    }
+  } catch (error) {
+    console.warn('GitHub Gist sync failed, trying cloud sync:', error)
+  }
+
   // Инициализируем облачную синхронизацию
   try {
     const cloudSync = (await import('./cloudSync')).default
@@ -119,6 +134,20 @@ export const createSession = async (name, masterId = null) => {
   // Создаем сессию локально
   const newSession = createDefaultSession(name)
   
+  // Пытаемся сохранить через GitHub Gist синхронизацию
+  try {
+    const githubGistSync = (await import('./githubGistSync')).default
+    await githubGistSync.init()
+    
+    if (await githubGistSync.addSession(newSession)) {
+      // Также сохраняем локально для совместимости
+      saveSession(newSession)
+      return newSession
+    }
+  } catch (error) {
+    console.warn('GitHub Gist sync failed, trying cloud sync:', error)
+  }
+
   // Пытаемся сохранить через облачную синхронизацию
   try {
     const cloudSync = (await import('./cloudSync')).default
