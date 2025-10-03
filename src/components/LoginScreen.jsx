@@ -21,11 +21,20 @@ const LoginScreen = ({ onLogin, currentSession, onBackToSessions }) => {
       setSessions([currentSession])
     } else {
       // Иначе загружаем все сессии
-      const existingSessions = getSessions()
-      console.log('Loaded sessions:', existingSessions.length)
-      setSessions(existingSessions)
+      loadSessions()
     }
   }, [currentSession])
+
+  const loadSessions = async () => {
+    try {
+      const existingSessions = await getSessions()
+      console.log('Loaded sessions:', existingSessions.length)
+      setSessions(existingSessions)
+    } catch (error) {
+      console.error('Error loading sessions:', error)
+      setSessions([])
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()

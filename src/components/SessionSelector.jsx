@@ -11,17 +11,22 @@ const SessionSelector = ({ onSessionSelect, onClose }) => {
     loadSessions()
   }, [])
 
-  const loadSessions = () => {
-    const existingSessions = getSessions()
-    setSessions(existingSessions)
+  const loadSessions = async () => {
+    try {
+      const existingSessions = await getSessions()
+      setSessions(existingSessions)
+    } catch (error) {
+      console.error('Error loading sessions:', error)
+      setSessions([])
+    }
   }
 
-  const handleCreateSession = () => {
+  const handleCreateSession = async () => {
     if (newSessionName.trim()) {
       setIsCreating(true)
       
-      setTimeout(() => {
-        const newSession = createSession(newSessionName.trim())
+      try {
+        const newSession = await createSession(newSessionName.trim())
         if (newSession) {
           setSessions(prev => [...prev, newSession])
           setNewSessionName('')
@@ -29,8 +34,13 @@ const SessionSelector = ({ onSessionSelect, onClose }) => {
           
           // Автоматически выбираем новую сессию
           onSessionSelect(newSession)
+        } else {
+          setIsCreating(false)
         }
-      }, 500)
+      } catch (error) {
+        console.error('Error creating session:', error)
+        setIsCreating(false)
+      }
     }
   }
 

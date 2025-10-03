@@ -54,7 +54,23 @@ export const saveSession = (session) => {
 }
 
 // Загрузка всех сессий
-export const getSessions = () => {
+export const getSessions = async () => {
+  // Сначала пытаемся загрузить с сервера
+  try {
+    const syncManager = (await import('./syncManager')).default
+    await syncManager.connect()
+    const serverSessions = await syncManager.getSessions()
+    
+    if (serverSessions && serverSessions.length > 0) {
+      // Сохраняем локально как fallback
+      localStorage.setItem('dnd-sessions', JSON.stringify(serverSessions))
+      return serverSessions
+    }
+  } catch (error) {
+    console.warn('Server sync failed, using local storage:', error)
+  }
+  
+  // Fallback на локальное хранение
   try {
     const sessions = localStorage.getItem('dnd-sessions')
     return sessions ? JSON.parse(sessions) : []
@@ -84,7 +100,23 @@ export const deleteSession = (sessionId) => {
 }
 
 // Создание новой сессии
-export const createSession = (name) => {
+export const createSession = async (name, masterId = null) => {
+  // Сначала пытаемся создать на сервере
+  try {
+    const syncManager = (await import('./syncManager')).default
+    await syncManager.connect()
+    const serverSession = await syncManager.createSession(name, masterId)
+    
+    if (serverSession) {
+      // Сохраняем локально как fallback
+      saveSession(serverSession)
+      return serverSession
+    }
+  } catch (error) {
+    console.warn('Server sync failed, using local storage:', error)
+  }
+  
+  // Fallback на локальное хранение
   const newSession = createDefaultSession(name)
   if (saveSession(newSession)) {
     return newSession
